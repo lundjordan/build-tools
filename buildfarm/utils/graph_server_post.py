@@ -70,12 +70,22 @@ def main():
     parser.add_option("--sourcestamp", dest="sourcestamp")
     parser.add_option("--resultsname", dest="resultsname")
     parser.add_option("--properties-file", dest="propertiesFile")
+    parser.add_option("--testresults", dest="testresults")
 
     options, args = parser.parse_args()
 
     # TODO: check params
-    properties = json.load(open(options.propertiesFile))
-    testresults = properties['properties']['testresults']
+    if options.testresults:  # we explicitly pass in testresults
+        # Bug 858797 mozharness has access to buildbot properties initially
+        # through buildprops.json and then saves further build props in
+        # individual files (not json) and in an obj dict. Here it makes sense
+        # to just pass testresults rather than creating a properties.json
+        testresults = options.testresults
+    else:  # we will use options.propertiesFile to obtain testresults
+        # in buildbot, we save build properties in a json properties file
+        # as the steps progress. 
+        properties = json.load(open(options.propertiesFile))
+        testresults = properties['properties']['testresults']
 
     for testresult in testresults:
         gp = GraphPost(server=options.server, selector=options.selector,
