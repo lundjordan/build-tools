@@ -65,10 +65,10 @@ def reboot(device, json):
 
 
 @per_host
-def update(foopy):
+def update(foopy, revision='default'):
     with show('running'):
         with cd('/builds/tools'):
-            run('hg pull && hg update')
+            run('hg pull && hg update -r %s' % revision)
             run('find /builds/tools -name \\*.pyc -exec rm {} \\;')
             with hide('stdout', 'stderr', 'running'):
                 tools_rev = run('hg ident -i')
@@ -105,6 +105,13 @@ def remove_error(device):
             run('rm -f ./error.flg')
         print OK, "Removed error flag for %s" % (device)
 
+@per_device
+def create_device_dirs(device):
+    from fabric.api import env
+    with settings(warn_only=True, user='root'):
+       run("mkdir /builds/%s" % device)
+    with settings(user='root'):
+       run("chown cltbld.cltbld /builds/%s" % device)
 
 @per_device
 def what_master(device):

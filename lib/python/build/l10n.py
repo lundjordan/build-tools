@@ -11,7 +11,7 @@ from urlparse import urljoin
 
 from release.platforms import getPlatformLocales, buildbot2ftp
 from release.paths import makeCandidatesDir
-from util.commands import run_cmd
+from util.commands import get_output, run_cmd
 from util.hg import mercurial, update
 from util.paths import windows2msys, msys2windows
 from util.retry import retry
@@ -27,7 +27,7 @@ def getMakeCommand(usePymake, absSourceRepoPath):
 
 
 def getAllLocales(appName, sourceRepo, rev="default",
-                  hg="http://hg.mozilla.org"):
+                  hg="https://hg.mozilla.org"):
     localeFile = "%s/raw-file/%s/%s/locales/all-locales" % \
         (sourceRepo, rev, appName)
     url = urljoin(hg, localeFile)
@@ -73,10 +73,11 @@ def l10nRepackPrep(sourceRepoName, objdir, mozconfigPath, srcMozconfigPath,
     run_cmd(["mkdir", "-p", "l10n"])
 
     if tooltoolManifest:
-        cmd = ['scripts/scripts/tooltool/fetch_and_unpack.sh',
+        cmd = ['sh', 'scripts/scripts/tooltool/tooltool_wrapper.sh',
                os.path.join(sourceRepoName, tooltoolManifest),
                tooltool_urls[0],  # TODO: pass all urls when tooltool ready
-               tooltool_script, 'setup.sh']
+               'setup.sh']
+        cmd.extend(tooltool_script)
         run_cmd(cmd)
 
     absSourceRepoPath = os.path.join(os.getcwd(), sourceRepoName)
@@ -97,7 +98,7 @@ def l10nRepackPrep(sourceRepoName, objdir, mozconfigPath, srcMozconfigPath,
 
 
 def repackLocale(locale, l10nRepoDir, l10nBaseRepo, revision, localeSrcDir,
-                 l10nIni, compareLocalesRepo, env, merge=True,
+                 l10nIni, compareLocalesRepo, env, absObjdir, merge=True,
                  productName=None, platform=None,
                  version=None, partialUpdates=None,
                  buildNumber=None, stageServer=None):
@@ -214,6 +215,16 @@ def repackLocale(locale, l10nRepoDir, l10nBaseRepo, revision, localeSrcDir,
           args=(make + ["upload", "AB_CD=%s" % locale], ),
           kwargs={'cwd': localeSrcDir, 'env': env})
 
+    # return the location of the checksums file, because consumers may want
+    # some information about the files that were generated.
+    # Some versions of make that we use (at least pymake) imply --print-directory
+    # We need to turn it off to avoid getting extra output that mess up our
+    # parsing of the checksum file path.
+    relative_checksums = get_output(make +
+                                    ["--no-print-directory", "echo-variable-CHECKSUM_FILE", "AB_CD=%s" % locale],
+                                    cwd=localeSrcDir, env=env).rstrip("\"'\n")
+    return path.normpath(path.join(absObjdir, relative_checksums))
+
 
 def getLocalesForChunk(possibleLocales, chunks, thisChunk):
     if 'en-US' in possibleLocales:
@@ -232,7 +243,7 @@ def getLocalesForChunk(possibleLocales, chunks, thisChunk):
 
 
 def getNightlyLocalesForChunk(appName, sourceRepo, platform, chunks, thisChunk,
-                              hg="http://hg.mozilla.org"):
+                              hg="https://hg.mozilla.org"):
     possibleLocales = getPlatformLocales(
         getAllLocales(appName, sourceRepo, hg=hg),
         (platform,)

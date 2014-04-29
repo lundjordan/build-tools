@@ -128,8 +128,8 @@ def bump_configs(release, cfgFile, l10nContents, workdir,
     update(workdir, productionBranch)
     cfgDir = path.join(workdir, 'mozilla')
     templateFile = path.join(cfgDir, '%s.template' % cfgFile)
-    tags = getTags(getBaseTag(release['product'], release['version']),
-                   release['buildNumber'])
+    tags = set(getTags(getBaseTag(release['product'], release['version']),
+                   release['buildNumber']))
     cfgFile = path.join(cfgDir, cfgFile)
     l10nChangesetsFile = path.join(
         cfgDir,
@@ -206,11 +206,13 @@ def main(options):
     config = load_config(options.config)
 
     if config.getboolean('release-runner', 'verbose'):
-        log_level=logging.DEBUG
+        log_level = logging.DEBUG
     else:
-        log_level=logging.INFO
+        log_level = logging.INFO
     logging.basicConfig(format="%(asctime)s - %(levelname)s - %(message)s",
                         level=log_level)
+    # Suppress logging of retry(), see bug 925321 for the details
+    logging.getLogger("util.retry").setLevel(logging.WARN)
 
     check_buildbot()
     check_fabric()
@@ -244,11 +246,21 @@ def main(options):
     configs_workdir = 'buildbot-configs'
     custom_workdir = 'buildbotcustom'
     tools_workdir = 'tools'
-    configs_pushRepo = make_hg_url(HG, get_repo_path(buildbot_configs),
-                                   protocol='ssh')
-    custom_pushRepo = make_hg_url(HG, get_repo_path(buildbotcustom),
-                                  protocol='ssh')
-    tools_pushRepo = make_hg_url(HG, get_repo_path(tools), protocol='ssh')
+    if "://" in buildbot_configs and not buildbot_configs.startswith("file"):
+        configs_pushRepo = make_hg_url(HG, get_repo_path(buildbot_configs),
+                                    protocol='ssh')
+    else:
+        configs_pushRepo = buildbot_configs
+    if "://" in buildbotcustom and not buildbotcustom.startswith("file"):
+        custom_pushRepo = make_hg_url(HG, get_repo_path(buildbotcustom),
+                                    protocol='ssh')
+    else:
+        custom_pushRepo = buildbotcustom
+    if "://" in tools and not tools.startswith("file"):
+        tools_pushRepo = make_hg_url(HG, get_repo_path(tools),
+                                    protocol='ssh')
+    else:
+        tools_pushRepo = tools
 
     rr = ReleaseRunner(api_root=api_root, username=username, password=password)
 
@@ -293,7 +305,7 @@ def main(options):
                 log.info("Adding %s -> %s symlink" % (symlink, target))
                 os.symlink(target, symlink)
 
-    tags = []
+    tags = set()
 
     def process_configs(repo, attempt):
         """Helper method that encapsulates all of the things necessary
@@ -302,7 +314,7 @@ def main(options):
         for release in rr.new_releases:
             rr.update_status(release, 'Writing configs')
             l10nContents = rr.get_release_l10n(release['name'])
-            tags.extend(getTags(
+            tags.update(getTags(
                 getBaseTag(release['product'], release['version']),
                 release['buildNumber'])
             )
