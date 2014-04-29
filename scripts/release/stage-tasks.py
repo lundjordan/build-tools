@@ -6,21 +6,21 @@ import sys
 import logging
 from subprocess import CalledProcessError
 from tempfile import NamedTemporaryFile
-try:
-    import json
-except ImportError:
-    import simplejson as json
+import site
 
 logging.basicConfig(
     stream=sys.stdout, level=logging.INFO, format="%(message)s")
 log = logging.getLogger(__name__)
 
-sys.path.append(path.join(path.dirname(__file__), "../../lib/python"))
-from release.info import readReleaseConfig, readBranchConfig
+site.addsitedir(path.join(path.dirname(__file__), "../../lib/python"))
+site.addsitedir(path.join(path.dirname(__file__), "../../lib/python/vendor"))
+from release.info import readReleaseConfig, readBranchConfig, readConfig
 from release.paths import makeCandidatesDir, makeReleasesDir
 from util.hg import update, make_hg_url, mercurial
 from util.commands import run_remote_cmd
 from util.transfer import scp
+from util.retry import retry
+import requests
 
 
 DEFAULT_BUILDBOT_CONFIGS_REPO = make_hg_url('hg.mozilla.org',
@@ -50,6 +50,27 @@ VIRUS_SCAN_CMD = ['nice', 'ionice', '-c2', '-n7',
                   '--no-summary', '--']
 
 PARTNER_BUNDLE_DIR = '/mnt/netapp/stage/releases.mozilla.com/bundles'
+# Left side is destination relative to PARTNER_BUNDLE_DIR.
+# Right side is source, relative to partner-repacks in the candidates dir.
+PARTNER_BUNDLE_MAPPINGS = {
+    r'msn/international/mac/australia/Firefox\ Setup.dmg': r'msn-australia/mac/en-US/Firefox\ %(version)s.dmg',
+    r'msn/international/mac/canada/Firefox\ Setup.dmg': r'msn-canada/mac/en-US/Firefox\ %(version)s.dmg',
+    r'msn/international/mac/de/Firefox\ Setup.dmg': r'msn-de/mac/de/Firefox\ %(version)s.dmg',
+    r'msn/international/mac/en-GB/Firefox\ Setup.dmg': r'msn-uk/mac/en-GB/Firefox\ %(version)s.dmg',
+    r'msn/international/mac/fr/Firefox\ Setup.dmg': r'msn-fr/mac/fr/Firefox\ %(version)s.dmg',
+    r'msn/international/mac/ja/Firefox\ Setup.dmg': r'msn-ja/mac/ja-JP-mac/Firefox\ %(version)s.dmg',
+    r'msn/us/mac/en-US/Firefox\ Setup.dmg': r'msn-us/mac/en-US/Firefox\ %(version)s.dmg',
+    r'bing/mac/en-US/Firefox-Bing.dmg': r'bing/mac/en-US/Firefox\ %(version)s.dmg',
+    r'msn/international/win32/australia/Firefox\ Setup.exe': r'msn-australia/win32/en-US/Firefox\ Setup\ %(version)s.exe',
+    r'msn/international/win32/canada/Firefox\ Setup.exe': r'msn-canada/win32/en-US/Firefox\ Setup\ %(version)s.exe',
+    r'msn/international/win32/de/Firefox\ Setup.exe': r'msn-de/win32/de/Firefox\ Setup\ %(version)s.exe',
+    r'msn/international/win32/en-GB/Firefox\ Setup.exe': r'msn-uk/win32/en-GB/Firefox\ Setup\ %(version)s.exe',
+    r'msn/international/win32/fr/Firefox\ Setup.exe': r'msn-fr/win32/fr/Firefox\ Setup\ %(version)s.exe',
+    r'msn/international/win32/ja/Firefox\ Setup.exe': r'msn-ja/win32/ja/Firefox\ Setup\ %(version)s.exe',
+    r'msn/us/win32/en-US/Firefox\ Setup.exe': r'msn-us/win32/en-US/Firefox\ Setup\ %(version)s.exe',
+    r'bing/win32/en-US/Firefox-Bing\ Setup.exe': r'bing/win32/en-US/Firefox\ Setup\ %(version)s.exe',
+}
+
 
 def validate(options, args):
     if not options.configfile:
@@ -201,25 +222,13 @@ def doSyncPartnerBundles(productName, version, buildNumber, stageServer,
                          stageUsername, stageSshKey):
     candidates_dir = makeCandidatesDir(productName, version, buildNumber)
 
-    # Sync the Bing packages...
-    bing_dir = '%s/partner-repacks/bing' % candidates_dir
-    mac_bing_src = '%s/mac/en-US/Firefox\\ %s.dmg' % (bing_dir, version)
-    mac_bing_dst = '%s/bing/mac/en-US/Firefox-Bing.dmg' % PARTNER_BUNDLE_DIR
-    win32_bing_src = '%s/win32/en-US/Firefox\\ Setup\\ %s.exe' % (bing_dir, version)
-    win32_bing_dst = '%s/bing/win32/en-US/Firefox-Bing\\ Setup.exe' % PARTNER_BUNDLE_DIR
-    run_remote_cmd(['cp', '-f', mac_bing_src, mac_bing_dst],
-        server=stageServer, username=stageUsername, sshKey=stageSshKey
-    )
-    run_remote_cmd(['cp', '-f', win32_bing_src, win32_bing_dst],
-        server=stageServer, username=stageUsername, sshKey=stageSshKey
-    )
-
-    # Sync the MSN packages...
-    run_remote_cmd(
-        ['rsync', '-av', '%s/partner-repacks/msn*' % candidates_dir,
-         PARTNER_BUNDLE_DIR],
-        server=stageServer, username=stageUsername, sshKey=stageSshKey
-    )
+    for dest, src in PARTNER_BUNDLE_MAPPINGS.iteritems():
+        full_dest = path.join(PARTNER_BUNDLE_DIR, dest)
+        full_src = path.join(candidates_dir, 'partner-repacks', src)
+        full_src = full_src % {'version': version}
+        run_remote_cmd(['cp', '-f', full_src, full_dest],
+            server=stageServer, username=stageUsername, sshKey=stageSshKey
+        )
 
     # And fix the permissions...
     run_remote_cmd(
@@ -237,6 +246,29 @@ def doSyncPartnerBundles(productName, version, buildNumber, stageServer,
          '-exec', 'chmod', '775', '{}', '\\;'],
         server=stageServer, username=stageUsername, sshKey=stageSshKey
     )
+
+
+def update_bouncer_aliases(tuxedoServerUrl, auth, version, bouncer_aliases):
+    for related_product_template, alias in bouncer_aliases.iteritems():
+        update_bouncer_alias(tuxedoServerUrl, auth, version,
+                             related_product_template, alias)
+
+
+def update_bouncer_alias(tuxedoServerUrl, auth, version,
+                         related_product_template, alias):
+    url = "%s/create_update_alias" % tuxedoServerUrl
+    related_product = related_product_template % {"version": version}
+
+    data = {"alias": alias, "related_product": related_product}
+    log.info("Updating %s to point to %s using %s", alias, related_product,
+             url)
+
+    # Wrap the real call to hide credentials from retry's logging
+    def do_update_bouncer_alias():
+        requests.post(url, data=data, auth=auth, config={'danger_mode': True},
+                      verify=False)
+
+    retry(do_update_bouncer_alias)
 
 
 if __name__ == '__main__':
@@ -278,6 +310,7 @@ if __name__ == '__main__':
     syncPartnerBundles = releaseConfig.get('syncPartnerBundles', False) \
         and productName != 'xulrunner'
     ftpSymlinkName = releaseConfig.get('ftpSymlinkName')
+    bouncer_aliases = releaseConfig.get('bouncer_aliases')
 
     if 'permissions' in args:
         checkStagePermissions(stageServer=stageServer,
@@ -347,3 +380,16 @@ if __name__ == '__main__':
                                  productName=productName,
                                  version=version,
                                  buildNumber=buildNumber)
+        if bouncer_aliases and productName != 'xulrunner':
+            credentials_file = path.join(os.getcwd(), "oauth.txt")
+            credentials = readConfig(
+                credentials_file,
+                required=["tuxedoUsername", "tuxedoPassword"])
+            auth = (credentials["tuxedoUsername"],
+                    credentials["tuxedoPassword"])
+
+            update_bouncer_aliases(
+                tuxedoServerUrl=releaseConfig["tuxedoServerUrl"],
+                auth=auth,
+                version=version,
+                bouncer_aliases=bouncer_aliases)

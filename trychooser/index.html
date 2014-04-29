@@ -54,7 +54,7 @@
                 <span id="build_linux64" class="build_queue">N/A</span>
             </li>
             <li>
-                <label><input type="checkbox" name="platform" value="linux64-asan" class="nondefault">linux64-asan</label>
+                <label><input type="checkbox" name="platform" value="linux64-asan">linux64-asan</label>
                 <span id="test_linux64-asan" class="test_queue">N/A</span>
                 <span id="build_linux64-asan" class="build_queue">N/A</span>
             </li>
@@ -62,6 +62,21 @@
                 <label><input type="checkbox" name="platform" value="linux64-st-an">linux64 static analysis</label>
                 <span id="test_linux64-st-an" class="test_queue">N/A</span>
                 <span id="build_linux64-st-an" class="build_queue">N/A</span>
+            </li>
+            <li>
+                <label><input type="checkbox" name="platform" value="linux64-valgrind">linux64 valgrind</label>
+                <span id="test_linux64-valgrind" class="test_queue">N/A</span>
+                <span id="build_linux64-valgrind" class="build_queue">N/A</span>
+            </li>
+            <li>
+                <label><input type="checkbox" name="platform" value="linux64-br-haz">browser rooting analysis</label>
+                <span id="test_linux64-br-haz" class="test_queue">N/A</span>
+                <span id="build_linux64-br-haz" class="build_queue">N/A</span>
+            </li>
+            <li>
+                <label><input type="checkbox" name="platform" value="linux64-sh-haz" class="nondefault">shell rooting analysis</label>
+                <span id="test_linux64-sh-haz" class="test_queue">N/A</span>
+                <span id="build_linux64-sh-haz" class="build_queue">N/A</span>
             </li>
             <li>
                 <label><input type="checkbox" name="platform" value="macosx64">macosx64</label>
@@ -89,11 +104,6 @@
                 <span id="build_android-armv6" class="build_queue">N/A</span>
             </li>
             <li>
-                <label><input type="checkbox" name="platform" value="android-noion" data-project="android">android-noion (Android 2.2)</label>
-                <span id="test_android-noion" class="test_queue">N/A</span>
-                <span id="build_android-noion" class="build_queue">N/A</span>
-            </li>
-            <li>
                 <label><input type="checkbox" name="platform" value="android-x86" data-project="android">android-x86 (Android 4.2)</label>
                 <span id="test_android-x86" class="test_queue">N/A</span>
                 <span id="build_android-x86" class="build_queue">N/A</span>
@@ -109,14 +119,14 @@
                 <span id="build_emulator-jb" class="build_queue">N/A</span>
             </li>
             <li>
-                <label><input type="checkbox" name="platform" value="unagi" data-project="b2g">unagi (B2G device image)</label>
-                <span id="test_unagi" class="test_queue">N/A</span>
-                <span id="build_unagi" class="build_queue">N/A</span>
+                <label><input type="checkbox" name="platform" value="emulator-kk" data-project="b2g">emulator-kk (B2G ARM, KK)</label>
+                <span id="test_emulator-kk" class="test_queue">N/A</span>
+                <span id="build_emulator-kk" class="build_queue">N/A</span>
             </li>
             <li>
-                <label><input type="checkbox" name="platform" value="linux_gecko" data-project="b2g">b2g desktop (linux)</label>
-                <span id="test_linux_gecko" class="test_queue">N/A</span>
-                <span id="build_linux_gecko" class="build_queue">N/A</span>
+                <label><input type="checkbox" name="platform" value="linux32_gecko" data-project="b2g">b2g desktop (linux)</label>
+                <span id="test_linux32_gecko" class="test_queue">N/A</span>
+                <span id="build_linux32_gecko" class="build_queue">N/A</span>
             </li>
             <li>
                 <label><input type="checkbox" name="platform" value="linux64_gecko" data-project="b2g">b2g desktop (linux64)</label>
@@ -127,6 +137,11 @@
                 <label><input type="checkbox" name="platform" value="macosx64_gecko" data-project="b2g">b2g desktop (macosx64)</label>
                 <span id="test_macosx64_gecko" class="test_queue">N/A</span>
                 <span id="build_macosx64_gecko" class="build_queue">N/A</span>
+            </li>
+            <li>
+                <label><input type="checkbox" name="platform" value="win32_gecko" data-project="b2g">b2g desktop (win32)</label>
+                <span id="test_win32_gecko" class="test_queue">N/A</span>
+                <span id="build_win32_gecko" class="build_queue">N/A</span>
             </li>
             </ul>
             </div>
@@ -140,15 +155,11 @@
             </li>
 
             <li>
-              <label><input type="checkbox" value="Fedora,Ubuntu,-x64">linux32</label>
+              <label><input type="checkbox" value="Ubuntu,-x64">linux32</label>
             </li>
 
             <li>
               <label><input type="checkbox" value="10.6">OSX 10.6</label>
-            </li>
-
-            <li>
-              <label><input type="checkbox" value="10.7">OSX 10.7</label>
             </li>
 
             <li>
@@ -195,6 +206,10 @@
                 <li><label><input type="checkbox" value="jetpack">jetpack</label></li>
                 <li><label><input type="checkbox" value="marionette">marionette</label></li>
                 <li><label><input type="checkbox" value="mozmill">mozmill <span class="info">(thunderbird only)</span></label></li>
+                <li><label><input type="checkbox" value="cppunit">cppunit</label></li>
+                <li><label><input type="checkbox" value="jittests">jittests</label></li>
+                <li><label><input type="checkbox" value="jittest-1">jittest-1 <span class="info">(linux only)</span></label></li>
+                <li><label><input type="checkbox" value="jittest-2">jittest-2 <span class="info">(linux only)</span></label></li>
                 <div class='option-subgroup'>
                 <li><label><input type="checkbox" class="subgroup-selector subgroup-all-selector" value="mochitests">mochitests (all)</label></li>
                     <ul>OR
@@ -204,6 +219,7 @@
                     <li><label><input type="checkbox" value="mochitest-4">mochitest-4</label></li>
                     <li><label><input type="checkbox" value="mochitest-5">mochitest-5</label></li>
                     <li><label><input type="checkbox" value="mochitest-bc">mochitest-bc</label></li>
+                    <li><label><input type="checkbox" value="mochitest-dt">mochitest-dt</label></li>
                     <li><label><input type="checkbox" value="mochitest-o">mochitest-o</label></li>
                     <li><label><input type="checkbox" value="mochitest-metro-chrome">mochitest-metro-chrome <span class="info">(win8 only)</span></label></li>
                     </ul>
@@ -239,6 +255,8 @@
             <li><label><input type="checkbox" value="robocop-1">robocop-1</label></li>
             <li><label><input type="checkbox" value="robocop-2">robocop-2</label></li>
             <li><label><input type="checkbox" value="robocop-3">robocop-3 <span class="info">(not x86)</span></label></li>
+            <li><label><input type="checkbox" value="robocop-4">robocop-4 <span class="info">(not x86)</span></label></li>
+            <li><label><input type="checkbox" value="robocop-5">robocop-5 <span class="info">(not x86)</span></label></li>
             <li><label><input type="checkbox" value="crashtest-1">crashtest-1 <span class="info">(only x86)</span></label></li>
             <li><label><input type="checkbox" value="crashtest-2">crashtest-2 <span class="info">(only x86)</span></label></li>
             <li><label><input type="checkbox" value="crashtest-3">crashtest-3 <span class="info">(only x86)</span></label></li>
@@ -260,12 +278,16 @@
             <li><label><input type="checkbox" value="reftest-9">reftest-9</label></li>
             <li><label><input type="checkbox" value="reftest-10">reftest-10</label></li>
             <li><label><input type="checkbox" value="marionette-webapi">marionette-webapi</label></li>
+            <li><label><input type="checkbox" value="gaia-linter">gaia-linter</label></li>
             <li><label><input type="checkbox" value="gaia-unit">gaia-unit-tests</label></li>
             <li><label><input type="checkbox" value="gaia-ui-test">gaia-ui-tests</label></li>
+            <li><label><input type="checkbox" value="gaia-integration">gaia-integration-tests</label></li>
             </ul>
             </div>
         </div> <!-- col2 div -->
         <div id="col3">
+            <h4>Profiling</h4>
+            <label><input type="checkbox" class="profile">profile</label> (<a href="https://wiki.mozilla.org/Buildbot/Talos/Profiling" title="Help">?</a>)
             <h4>Talos Suites</h4>
             <div class='option-group' try-section='t'>
             <label><input type="checkbox" class="group-selector all-selector">All</label>
@@ -290,7 +312,7 @@
             </ul>
             </div>
 
-            <p class="indent1"><strong>Want to match Talos suite names up to what they run?</strong>  Check <a href="http://hg.mozilla.org/build/buildbot-configs/file/tip/mozilla-tests/config.py#l179">the current configs</a><br>
+            <p class="indent1"><strong>Want to match Talos suite names up to what they run?</strong>  Check <a href="https://hg.mozilla.org/build/buildbot-configs/file/tip/mozilla-tests/config.py#l179">the current configs</a><br>
             (contents may shift over time, <br/>
             you want SUITES = { ... })</p>
         </div> <!-- col3 div -->

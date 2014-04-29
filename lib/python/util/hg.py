@@ -440,9 +440,22 @@ def mercurial(repo, dest, branch=None, revision=None, update_dest=True,
                       update_dest=False, shareBase=None, clone_by_rev=clone_by_rev,
                       mirrors=mirrors, bundles=bundles, autoPurge=False)
             if os.path.exists(dest):
-                if autoPurge:
-                    purge(dest)
-                return update(dest, branch=branch, revision=revision)
+
+                # Bug 969689: Check to see if the dest repo is still on a valid
+                # commit. It is possible that the shared repo was cloberred out
+                # from under us, effectively stripping our active commit. This
+                # can cause 'hg status', 'hg purge', and the like to do
+                # incorrect things. If we detect this situation, then it's best
+                # to clobber and re-create dest.
+                parent = get_revision(dest)
+                if not parent:
+                    log.info("Shared repo %s no longer has our parent cset; clobbering",
+                             sharedRepo)
+                    remove_path(dest)
+                else:
+                    if autoPurge:
+                        purge(dest)
+                    return update(dest, branch=branch, revision=revision)
 
             try:
                 log.info("Trying to share %s to %s", sharedRepo, dest)
@@ -609,3 +622,10 @@ def tag(dest, tags, user=None, msg=None, rev=None, force=None):
     cmd.extend(tags)
     run_cmd(cmd, cwd=dest)
     return get_revision(dest)
+
+
+def merge_via_debugsetparents(dest, old_head, new_head, msg, user=None):
+    """Merge 2 heads avoiding non-fastforward commits"""
+    cmd = ['hg', 'debugsetparents', new_head, old_head]
+    run_cmd(cmd, cwd=dest)
+    commit(dest, msg=msg, user=user)

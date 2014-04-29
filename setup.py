@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="buildtools",
-    version="1.0",
+    version="1.0.4",
     description="Mozilla RelEng Toolkit",
     author="Release Engineers",
     author_email="release@mozilla.com",
@@ -22,6 +22,9 @@ setup(
         'argparse',
         'twisted',
         'simplejson',
+        'furl',
+        'requests',
+        'docopt',
     ],
 
     entry_points={
@@ -29,6 +32,8 @@ setup(
             'slavealloc = slavealloc.scripts.main:main'
         ],
     },
+
+    scripts=["buildfarm/maintenance/reboot-idle-slaves.py"],
 
     # include files listed in MANIFEST.in
     include_package_data=True,

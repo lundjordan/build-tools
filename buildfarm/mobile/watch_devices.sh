@@ -38,7 +38,8 @@ function device_check() {
   local device=$1
   export PYTHONPATH=/builds/sut_tools
   deviceIP="$(nslookup "${device}" 2>/dev/null | sed -n '/^Name/,$s/^Address: *//p')"
-  if ! lockfile -r0 "/builds/${device}/watcher.lock" >/dev/null 2>&1; then
+  # 43200s = 12 hours - this is when stale lockfiles will get cleaned up
+  if ! lockfile -l 43200 -r0 "/builds/${device}/watcher.lock" >/dev/null 2>&1; then
     death "failed to aquire lockfile" 67
   fi
   log_message="Starting cycle for our device ($device = $deviceIP) now"
@@ -68,7 +69,7 @@ function device_check() {
     fi
     export SUT_NAME=$device
     export SUT_IP=$deviceIP
-    if ! "${PYTHON}" /builds/sut_tools/verify.py $device; then
+    if ! "${PYTHON}" /builds/sut_tools/verify.py --success-if-mozpool-ready $device; then
       log "Verify procedure failed"
       if [ ! -f /builds/$device/error.flg ]; then
         log "error.flg file does not exist, so creating it..."
