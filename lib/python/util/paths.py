@@ -18,10 +18,15 @@ def windows2msys(path):
     return "/" + drive[0] + path.replace('\\', '/')
 
 
-def msys2windows(path):
+def msys2windows(path, force_translation=False):
     """ Translate an MSYS pathname to Windows.
-        Possibly needed for pymake. """
-    if not sys.platform.startswith('win'):
+
+    Possibly needed for pymake.
+    path -- the msys path
+    force_translation -- forces path manipulation even if platform is not
+    windows
+    """
+    if not sys.platform.startswith('win') and not force_translation:
         return path
     if '/' not in path:
         return path.replace('\\', '\\\\\\\\')
