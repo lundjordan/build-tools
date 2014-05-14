@@ -80,7 +80,7 @@ def main():
         # through buildprops.json and then saves further build props in
         # individual files (not json) and in an obj dict. Here it makes sense
         # to just pass testresults rather than creating a properties.json
-        testresults = eval(options.testresults)
+        testresults = options.testresults
     else:  # we will use options.propertiesFile to obtain testresults
         # in buildbot, we save build properties in a json properties file
         # as the steps progress. 
