@@ -6,11 +6,13 @@ except ImportError:
 
 import os
 from os import path
-import site
 import logging
 import sys
 
-site.addsitedir(path.join(path.dirname(__file__), "../../lib/python"))
+# Use explicit version of python-requests
+sys.path.insert(0, path.join(path.dirname(__file__),
+                             "../../lib/python/vendor/requests-0.10.8"))
+sys.path.insert(0, path.join(path.dirname(__file__), "../../lib/python"))
 
 from balrog.submitter.cli import ReleaseCreator, ReleasePusher
 from release.info import readReleaseConfig
@@ -81,12 +83,12 @@ if __name__ == '__main__':
     updateChannels = release_config['testChannels'] + [release_config['releaseChannel']]
 
     creator = ReleaseCreator(options.api_root, auth)
-    creator.run(release_config['appVersion'], release_config['productName'],
+    creator.run(release_config['appVersion'], release_config['productName'].capitalize(),
                 release_config['version'], release_config['buildNumber'],
                 release_config['partialUpdates'], updateChannels,
                 release_config['stagingServer'], release_config['bouncerServer'],
                 release_config['enUSPlatforms'], hashType)
 
     pusher = ReleasePusher(options.api_root, auth)
-    pusher.run(release_config['productName'], release_config['version'],
+    pusher.run(release_config['productName'].capitalize(), release_config['version'],
                release_config['buildNumber'], release_config['testChannelRuleIds'])
