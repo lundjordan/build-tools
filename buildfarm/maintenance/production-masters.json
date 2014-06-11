@@ -654,7 +654,7 @@
     "buildbot_version": "0.8.2",
     "datacentre": "aws-us-east-1",
     "db_name": "buildbot-master69.srv.releng.use1.mozilla.com:/builds/buildbot/tests1-windows/master",
-    "enabled": true,
+    "enabled": false,
     "environment": "production",
     "hostname": "buildbot-master69.srv.releng.use1.mozilla.com",
     "http_port": 8201,
@@ -1431,7 +1431,8 @@
     },
     "limit_mobile_platforms": [
       "android-x86",
-      "android"
+      "android",
+      "android-armv6"
     ],
     "limit_tb_platforms": [
       "linux",
@@ -1484,7 +1485,8 @@
     },
     "limit_mobile_platforms": [
       "android-x86",
-      "android"
+      "android",
+      "android-armv6"
     ],
     "limit_tb_platforms": [
       "linux",
@@ -1537,7 +1539,8 @@
     },
     "limit_mobile_platforms": [
       "android-x86",
-      "android"
+      "android",
+      "android-armv6"
     ],
     "limit_tb_platforms": [
       "linux",
