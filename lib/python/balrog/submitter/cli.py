@@ -221,31 +221,6 @@ class NightlySubmitterBase(object):
         self.auth = auth
         self.dummy = dummy
 
-    def get_build_type_from_build_target(self, build_target, current_build_type):
-        # normally a product wide release will match a mapping based upon rules we set up. Within
-        # that mapping, we then separate the platforms/variants by the build_target.
-        #
-        # essentially this allows us to use a consistent mapping naming scheme for releases
-        # and identify different platforms by build_target.
-        #
-        # However when we have two platforms that request with the same build_target
-        # (e.g. flame), we need to split the release under two mappings and then pivot off
-        # custom rule values, e.g. OS_VERSION, so we can know which mapping to use.
-
-        # see:
-        #
-
-        build_target_exceptions = {
-            'flame-kk': 'kitkat',  # Bug 1055305 - support JB and KK flame updates
-            'Android_arm-eabi-gcc3-api-9': 'api-9',  # Bug 1080749 - support api-9 and api-10+ split builds
-        }
-
-        if build_target_exceptions.get(build_target):
-            # create a mapping based off a custom name
-            return '%s-%s' % (build_target_exceptions[build_target], current_build_type)
-        else:
-            return current_build_type
-
     def run(self, platform, buildID, productName, branch, appVersion, locale,
             hashFunction, extVersion, schemaVersion, isOSUpdate=None, **updateKwargs):
         assert schemaVersion in (3,4), 'Unhandled schema version %s' % schemaVersion
@@ -266,8 +241,18 @@ class NightlySubmitterBase(object):
 
         data.update(self._get_update_data(productName, branch, **updateKwargs))
 
-        # hack - bug 1055305, 1080749
-        build_type = self.get_build_type_from_build_target(build_target, self.build_type)
+        if build_target == 'flame-kk':
+            # Bug 1055305 - a hack so that we can have JB and KK OTA for flame.
+            # They both query with buildTarget of flame, but differ in OS Version,
+            # so we need separate release blobs and rule to do the right thing
+            build_type = 'kitkat-%s' % self.build_type
+        elif platform == 'android-api-9':
+            # Bug 1080749 - a hack to support api-9 and api-10+ split builds.
+            # Like 1055305 above, this is a hack to support two builds with same build target that
+            # require differed't release blobs and rules
+            build_type = 'api-9-%s' % self.build_type
+        else:
+            build_type = self.build_type
 
         name = get_nightly_blob_name(productName, branch, build_type, buildID, self.dummy)
         data = json.dumps(data)
