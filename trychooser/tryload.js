@@ -91,7 +91,6 @@ function getTryLoads(callback) {
                                    load_try_test["win8-ix"] + load_nontry_test["win8-ix"]);
         totalTestLoad["win64"] = load_try_test["win2012x64"] + load_nontry_test["win2012x64"];
         totalTestLoad["android-api-9"] = Math.max(
-                                    load_try_test["ubuntu64-hw"] + load_nontry_test["ubuntu64-hw"],
                                     load_try_test["ubuntu64-vm"] + load_nontry_test["ubuntu64-vm"]);
         totalTestLoad["android-api-10"] = Math.max(
                                     load_try_test["panda"] + load_nontry_test["panda"]);
