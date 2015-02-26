@@ -37,7 +37,7 @@ function getTryLoad(url, callback) {
         var line = loadLines[i];
         var words = loadLines[i].split(" ");
         if (words.length == 2 && words[1].charAt(0) == "(" && words[1].charAt(words[1].length-1) == ")") {
-          load[words[0]] = parseInt(words[1].substring(1, words[1].length - 1)); 
+          load[words[0]] = parseInt(words[1].substring(1, words[1].length - 1));
         }
       }
       callback(load);
@@ -70,10 +70,13 @@ function getTryLoads(callback) {
         totalBuildLoad["emulator"] = totalBuildLoad["linux"];
         totalBuildLoad["emulator-jb"] = totalBuildLoad["linux"];
         totalBuildLoad["emulator-kk"] = totalBuildLoad["linux"];
+        totalBuildLoad["emulator-l"] = totalBuildLoad["linux"];
         totalBuildLoad["linux32_gecko"] = totalBuildLoad["linux"];
         totalBuildLoad["linux64_gecko"] = totalBuildLoad["linux"];
         totalBuildLoad["macosx64_gecko"] = totalBuildLoad["macosx64"];
+        totalBuildLoad["macosx64-mulet"] = totalBuildLoad["macosx64"];
         totalBuildLoad["win32_gecko"] = totalBuildLoad["win32"];
+        totalBuildLoad["win32-mulet"] = totalBuildLoad["win32"];
 
         var totalTestLoad = {};
         totalTestLoad["linux"] = load_try_test["ubuntu32-hw"] + load_nontry_test["ubuntu32-hw"] +
@@ -87,10 +90,12 @@ function getTryLoads(callback) {
                                       load_try_test["mac10.6"] + load_nontry_test["mac10.6"],
                                       load_try_test["mac10.8"] + load_nontry_test["mac10.8"],
                                       load_try_test["mac10.10"] + load_nontry_test["mac10.10"]);
+        totalTestLoad["macosx64-mulet"] = totalTestLoad["macosx64"];
         totalTestLoad["win32"] = Math.max(
                                    load_try_test["winxp-ix"] + load_nontry_test["winxp-ix"],
                                    load_try_test["win7-ix"] + load_nontry_test["win7-ix"],
                                    load_try_test["win8-ix"] + load_nontry_test["win8-ix"]);
+        totalTestLoad["win32-mulet"] = totalTestLoad["win32"];
         totalTestLoad["win64"] = load_try_test["win2012x64"] + load_nontry_test["win2012x64"];
         totalTestLoad["android-api-9"] = Math.max(
                                     load_try_test["ubuntu64-vm"] + load_nontry_test["ubuntu64-vm"]);
@@ -100,6 +105,7 @@ function getTryLoads(callback) {
         totalTestLoad["emulator"] = load_try_test["ubuntu64-vm"]
         // emulator-jb: N/A
         // emulator-kk: N/A
+        // emulator-l: N/A
         totalTestLoad["linux32_gecko"] = totalTestLoad["linux"];
         totalTestLoad["linux64_gecko"] = totalTestLoad["linux64"];
         totalTestLoad["macosx64_gecko"] = totalTestLoad["macosx64"];
