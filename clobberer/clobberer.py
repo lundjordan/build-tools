@@ -282,39 +282,37 @@ def process_clobber_times(server_clobber_times, args):
 
 
 def make_argparser():
-    import argparse
-    parser = argparse.ArgumentParser(__doc__)
-    parser.add_argument("-n", "--dry-run", dest="dryrun", action="store_true",
-                        default=False, help="don't actually delete anything")
-    parser.add_argument("-t", "--periodic", dest="period", type=float,
-                        default=None, help="hours between periodic clobbers")
-    parser.add_argument('-s', '--skip', help='do not delete this file/directory',
-                        action='append', dest='skip', default=['last-clobber'])
-    parser.add_argument('-d', '--dir', help='clobber this directory',
-                        dest='dir', default='.')
-    parser.add_argument('--builddir', help='a specific builddir for periodic clobbers')
-    parser.add_argument('-v', '--verbose', help='be more verbose',
-                        dest='loglevel', action='store_const',
-                        default=logging.INFO, const=logging.DEBUG)
-    parser.add_argument('--url', dest='clobber_url', help='URL to clobberer service')
-    parser.add_argument('--slave', default=get_hostname(),
-                        help='Name of the slave being clobbered (defaults to hostname)')
-    parser.add_argument('legacy', nargs='*', help='legacy support: '
-                        'specify clobber_url branch buildername builddir slave'
-                        '(only checks in, does not clobber)')
+    import optparse
+    parser = optparse.OptionParser(
+        "%prog [options] clobberURL branch buildername builddir slave master"
+    )
+    parser.add_option("-n", "--dry-run", dest="dryrun", action="store_true",
+                      default=False, help="don't actually delete anything")
+    parser.add_option("-t", "--periodic", dest="period", type=float,
+                      default=None, help="hours between periodic clobbers")
+    parser.add_option('-s', '--skip', help='do not delete this file/directory',
+                      action='append', dest='skip', default=['last-clobber'])
+    parser.add_option('-d', '--dir', help='clobber this directory',
+                      dest='dir', default='.')
+    parser.add_option('--builddir', help='a specific builddir for periodic clobbers')
+    parser.add_option('-v', '--verbose', help='be more verbose',
+                      dest='loglevel', action='store_const',
+                      default=logging.INFO, const=logging.DEBUG)
+    parser.add_option('--url', dest='clobber_url', help='URL to clobberer service')
+    parser.add_option('--slave', default=get_hostname(),
+                      help='Name of the slave being clobbered (defaults to hostname)')
     return parser
 
 
-def main(args):
+def main(args, legacy=None):
     if args.period:
         args.periodic_clobber_time = args.period * 3600
     else:
         args.periodic_clobber_time = None
-
     # Legacy support
-    if args.legacy and len(args.legacy) > 1:
+    if legacy and len(legacy) > 1:
         log.info("Entering legacy mode.")
-        server_clobber_times = legacy_get_clobber_times(*args.legacy)
+        server_clobber_times = legacy_get_clobber_times(*legacy)
     elif not args.clobber_url:
         # we can't set required=True because of legacy support
         raise Exception("--url required")
@@ -325,6 +323,6 @@ def main(args):
 
 if __name__ == "__main__":
     parser = make_argparser()
-    parsed_args = parser.parse_args()
+    parsed_args, legacy = parser.parse_args()
     logging.basicConfig(level=parsed_args.loglevel, format="%(asctime)s - %(message)s")
-    main(parsed_args)
+    main(parsed_args, legacy=legacy)

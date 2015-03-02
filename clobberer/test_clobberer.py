@@ -21,7 +21,7 @@ class TestClobbererClient(TestCase):
 
         self.slave_name = 'un-petit-bebe'
         parser = make_argparser()
-        self.process_args = parser.parse_args([
+        self.process_args, legacy = parser.parse_args([
             '--dir',
             '/',
             '--slave',
