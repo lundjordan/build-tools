@@ -2,6 +2,8 @@ import unittest
 import subprocess
 import os
 
+from nose.plugins.skip import SkipTest
+
 from util.commands import run_cmd, get_output, run_cmd_periodic_poll, TERMINATED_PROCESS_MSG
 
 
@@ -129,8 +131,9 @@ class TestGetOutput(unittest.TestCase):
         else:
             self.fail("get_output did not raise CalledProcessError")
 
-    @unittest.skipIf(not has_urandom(), '/dev/urandom is not available')
     def testInsaneOutputStreamTimeout(self):
+        if not has_urandom():
+            raise SkipTest
         text_s = "this is just a test"
         # create a huge output, check that text_s is in the raised exception
         # output.

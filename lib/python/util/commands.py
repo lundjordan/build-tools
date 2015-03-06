@@ -138,8 +138,9 @@ def run_cmd_periodic_poll(cmd, warning_interval=300, poll_interval=0.25,
                      (now - start_time, timeout))
             proc.terminate()
             proc.wait()
-            raise subprocess.CalledProcessError(proc.returncode, cmd,
-                                                output=TERMINATED_PROCESS_MSG)
+            error = subprocess.CalledProcessError(proc.returncode, cmd)
+            error.output = TERMINATED_PROCESS_MSG
+            raise error
         # sleep for a while...
         time.sleep(poll_interval)
 
@@ -163,7 +164,7 @@ def get_output(cmd, include_stderr=False, dont_log=False, timeout=86400,
     If you need to stop a process when it takes longer than expected, set a decent
     timeout value when calling this function.
 
-    Please note that proc.commuicate() can be an expensive operation when the output
+    Please note that proc.communicate() can be an expensive operation when the output
     is large, some samples:
     output size | time spent in proc.communicate():
        [bytes]  |  [s]
@@ -201,20 +202,23 @@ def get_output(cmd, include_stderr=False, dont_log=False, timeout=86400,
                     log.info(output)
                 return output
             else:
-                raise subprocess.CalledProcessError(proc.returncode, cmd, output=output)
+                error = subprocess.CalledProcessError(proc.returncode, cmd)
+                error.output = output
+                raise error
 
         if elapsed > timeout:
             log.info("process, is taking too long: %ss (timeout %ss).Terminating" %
                      (elapsed, timeout))
             proc.terminate()
             (stdoutdata, stderrdata) = proc.communicate()
-            # the process is terminated but .commuicate can take few seconds to
+            # the process is terminated but .communicate can take few seconds to
             # complete
             msg = "%s, stdout: %s" % (TERMINATED_PROCESS_MSG, stdoutdata)
             if include_stderr:
                 msg = "%s, stderr: %s" % (msg, stderrdata)
-            raise subprocess.CalledProcessError(proc.returncode, cmd,
-                                                output=msg)
+            error = subprocess.CalledProcessError(proc.returncode, cmd)
+            error.output = msg
+            raise error
         # sleep for a while
         time.sleep(poll_interval)
 
