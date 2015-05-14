@@ -49,7 +49,7 @@ def _make_absolute(repo):
         repo = "file://%s" % os.path.abspath(path)
     elif "://" not in repo:
         repo = os.path.abspath(repo)
-    return repo
+    return repo.rstrip('/')
 
 
 def make_hg_url(hgHost, repoPath, protocol='https', revision=None,
@@ -158,11 +158,29 @@ def hg_ver():
     return ver
 
 
+def get_hg_ext(ext_name):
+    """Returns the path to an hg extension"""
+    ext_dir = os.path.normpath(os.path.join(
+        os.path.dirname(__file__),
+        "../../..",
+        "hgext",
+    ))
+    return os.path.abspath(os.path.join(ext_dir, ext_name))
+
+
 def purge(dest):
     """Purge the repository of all untracked and ignored files."""
+    cmd = ['hg', '--config', 'extensions.purge=']
+    # Do we have the purgelong extension? If so, turn it on
+    purgelong_ext = get_hg_ext('purgelong.py')
+    if os.path.exists(purgelong_ext):
+        cmd.extend(['--config', 'extensions.purgelong=%s' % purgelong_ext])
+    else:
+        log.debug("couldn't find purgelong at %s", purgelong_ext)
+    cmd.extend(['purge', '-a', '--all', dest])
+
     try:
-        run_cmd(['hg', '--config', 'extensions.purge=', 'purge',
-                 '-a', '--all', dest], cwd=dest)
+        run_cmd(cmd, cwd=dest)
     except subprocess.CalledProcessError, e:
         log.debug('purge failed: %s' % e)
         raise
@@ -487,7 +505,7 @@ def mercurial(repo, dest, branch=None, revision=None, update_dest=True,
         hgpath = path(dest, "default")
 
         # Make sure that our default path is correct
-        if hgpath != _make_absolute(repo):
+        if not hgpath or _make_absolute(hgpath) != _make_absolute(repo):
             log.info("hg path isn't correct (%s should be %s); clobbering",
                      hgpath, _make_absolute(repo))
             remove_path(dest)

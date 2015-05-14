@@ -95,6 +95,11 @@
                 <span id="build_macosx64" class="build_queue">N/A</span>
             </li>
             <li>
+                <label><input type="checkbox" name="platform" value="macosx64-st-an">macosx64 static analysis</label>
+                <span id="test_macosx64-st-an" class="test_queue">N/A</span>
+                <span id="build_macosx64-st-an" class="build_queue">N/A</span>
+            </li>
+            <li>
                 <label><input type="checkbox" name="platform" value="macosx64-mulet">macosx64-mulet</label>
                 <span id="test_macosx64-mulet" class="test_queue">N/A</span>
                 <span id="build_macosx64-mulet" class="build_queue">N/A</span>
@@ -277,10 +282,10 @@
                     <li><label><input type="checkbox" value="mochitest-3">mochitest-3</label></li>
                     <li><label><input type="checkbox" value="mochitest-4">mochitest-4</label></li>
                     <li><label><input type="checkbox" value="mochitest-5">mochitest-5</label></li>
-                    <li><label><input type="checkbox" value="mochitest-gl">mochitest-gl</label></li>
-                    <li><label><input type="checkbox" value="mochitest-bc">mochitest-bc</label></li>
-                    <li><label><input type="checkbox" value="mochitest-dt">mochitest-dt</label></li>
-                    <li><label><input type="checkbox" value="mochitest-o">mochitest-o</label></li>
+                    <li><label><input type="checkbox" value="mochitest-gl">mochitest-gl (webgl)</label></li>
+                    <li><label><input type="checkbox" value="mochitest-bc">mochitest-bc (browser chrome)</label></li>
+                    <li><label><input type="checkbox" value="mochitest-dt">mochitest-dt (devtools)</label></li>
+                    <li><label><input type="checkbox" value="mochitest-o">mochitest-o (other)</label></li>
                     <li><label><input type="checkbox" value="mochitest-jetpack">mochitest-jetpack</label></li>
                     <li><label><input type="checkbox" value="mochitest-e10s-1">mochitest-e10s-1</label></li>
                     <li><label><input type="checkbox" value="mochitest-e10s-2">mochitest-e10s-2</label></li>
@@ -422,6 +427,7 @@
                 <li><label><input type="checkbox" name="talos_suite" value="other_nol64">other (no linux 64)</label></li>
                 <li><label><input type="checkbox" name="talos_suite" value="other_l64">other (linux 64 - includes mediatests)</label></li>
                 <li><label><input type="checkbox" name="talos_suite" value="g1">g1</label></li>
+                <li><label><input type="checkbox" name="talos_suite" value="g2">g2</label></li>
                 <li><label><input type="checkbox" name="talos_suite" value="svgr">svgr</label></li>
                 <li><label><input type="checkbox" name="talos_suite" value="tp5o">tp5o</label></li>
                 <li><label><input type="checkbox" name="talos_suite" value="xperf">xperf <span class="info">(win7 only)</span></label></li>
