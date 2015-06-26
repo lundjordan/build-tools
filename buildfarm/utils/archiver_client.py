@@ -11,19 +11,14 @@
 """
     calls relengapi archiver, downloads returned s3 url, and unpacks it locally
 """
-import gzip
-
 import logging
 import os
 import random
 import tarfile
-from tempfile import TemporaryFile
 import time
 import urllib2
 import json
-
 from optparse import OptionParser
-import shutil
 
 SUCCESS_CODE = 0
 # This is not an infra error and we can't recover from it
@@ -42,14 +37,8 @@ ARCHIVER_CONFIGS = {
     }
 }
 
-SUBDIR_ROOT = {
-    "mozharness": "mozharness/"
-}
-
 RELENGAPI_HOST = {
-    # 'staging': 'https://api-pub-build.allizom.org/',
-    # TODO - delete this
-    'staging': 'http://127.0.0.1:8010/',
+    'staging': 'https://api-pub-build.allizom.org/',
     'production': 'https://api.pub.build.mozilla.org/'
 }
 
@@ -58,7 +47,7 @@ log = logging.getLogger(__name__)
 
 
 # This has been copied from lib.python.util.retry
-def retrier(attempts=5, sleeptime=10, max_sleeptime=300, sleepscale=1.5, jitter=1):
+def retrier(attempts=5, sleeptime=7, max_sleeptime=300, sleepscale=1.5, jitter=1):
     """ It helps us retry """
     for _ in range(attempts):
         log.debug("attempt %i/%i", _ + 1, attempts)
@@ -156,29 +145,21 @@ def get_url_response(url, options):
     return response
 
 
-def get_tar_mode(content_type):
-    conversion_dict = {'application/x-gzip': 'r:gz',
-                       'application/x-bzip2': 'r:bz2'}
-    try:
-        return conversion_dict[content_type]
-    except KeyError:
-        log.error("Invalid content-type from url. "
-                  "Got: {} Valid types: {}".format(content_type, str(conversion_dict)))
-        exit(FAILURE_CODE)
-
-
 def download_and_extract_archive(response, extract_root, destination):
-    content_type = None
-    try:
-        content_type = response.headers['Content-Type']
-    except KeyError:
-        log.error("Couldn't determine compression type of archive. Missing 'Content-Type' header. "
-                  "Headers received: {}".format(str(response.headers.keys())))
-        exit(FAILURE_CODE)
+    """downloads and extracts an archive from the archiver response.
+
+    If the archive was based on an archive, only files and directories from within the subdir are
+    extracted. The extraction takes place in the destination, overriding paths with the same name.
+
+    :param response: the archiver response pointing to an archive
+    :param extract_root: the root path to be extracted
+    :param destination: the destination path to extract to
+    """
+    # make sure our extracted root path has a trailing slash
+    extract_root = os.path.join(extract_root, '')
 
     try:
-        with tarfile.open(fileobj=response, mode=get_tar_mode(content_type)) as tar:
-            # only extract paths within the extract_root
+        with tarfile.open(fileobj=response, mode='r|gz') as tar:
             for member in tar:
                 if not member.name.startswith(extract_root):
                     continue
