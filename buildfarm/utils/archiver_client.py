@@ -93,7 +93,6 @@ def get_response_from_task(url, options):
         if task_result.get('s3_urls'):
             # grab a s3 url using the preferred region if available
             s3_url = task_result['s3_urls'].get(options.region, task_result['s3_urls'].values()[0])
-            print s3_url
             return urllib2.urlopen(s3_url)
         else:
             log.error("An s3 URL could not be determined even though archiver task completed. Check"
@@ -133,7 +132,8 @@ def get_url_response(url, options):
 
         except (urllib2.HTTPError, urllib2.URLError) as e:
             if num == options.max_retries - 1:
-                log.exception(e)
+                log.exception("Could not get a valid response from archiver endpoint. "
+                              "Status response code: {}".format(response.code))
                 exit(INFRA_CODE)
         num += 1
 
@@ -167,7 +167,6 @@ def download_and_extract_archive(response, extract_root, destination):
                 tar.extract(member, destination)
     except tarfile.TarError as e:
         log.exception("Could not download and extract archive. See Traceback:")
-        log.exception(e)
         exit(INFRA_CODE)
 
 
