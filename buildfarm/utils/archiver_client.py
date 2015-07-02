@@ -156,6 +156,9 @@ def download_and_extract_archive(response, extract_root, destination):
     """
     # make sure our extracted root path has a trailing slash
     extract_root = os.path.join(extract_root, '')
+    # now convert any back slashes to forward slashes as tarfile's member path strings use posix
+    # forward slashes even if run on a windows machine
+    extract_root = extract_root.replace("\\", "/")
 
     try:
         tar = tarfile.open(fileobj=response, mode='r|gz')
