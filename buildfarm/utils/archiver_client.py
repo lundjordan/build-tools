@@ -158,15 +158,17 @@ def download_and_extract_archive(response, extract_root, destination):
     extract_root = os.path.join(extract_root, '')
 
     try:
-        with tarfile.open(fileobj=response, mode='r|gz') as tar:
-            for member in tar:
-                if not member.name.startswith(extract_root):
-                    continue
-                member.name = member.name.replace(extract_root, '')
-                tar.extract(member, destination)
+        tar = tarfile.open(fileobj=response, mode='r|gz')
+        for member in tar:
+            if not member.name.startswith(extract_root):
+                continue
+            member.name = member.name.replace(extract_root, '')
+            tar.extract(member, destination)
     except tarfile.TarError as e:
         log.exception("Could not download and extract archive. See Traceback:")
         exit(INFRA_CODE)
+    finally:
+        tar.close()
 
 
 def archiver(url, config_key, options):
