@@ -14,6 +14,7 @@
 import logging
 import os
 import random
+import subprocess
 import tarfile
 import time
 import urllib2
@@ -260,7 +261,10 @@ def main():
     if subdir:
         api_url += "&subdir=%s" % (subdir,)
 
-    archiver(url=api_url, config_key=config, options=options)
+    rev = subprocess.check_output(['hg', '--help'])
+    print rev
+
+    # archiver(url=api_url, config_key=config, options=options)
 
     exit(SUCCESS_CODE)
 
