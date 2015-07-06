@@ -261,8 +261,8 @@ def main():
     if subdir:
         api_url += "&subdir=%s" % (subdir,)
 
-    rev = subprocess.check_output(['hg', '--help'])
-    print rev
+    output = subprocess.Popen(['hg', '--help'], stdout=subprocess.PIPE).communicate()[0]
+    print output
 
     # archiver(url=api_url, config_key=config, options=options)
 
