@@ -246,7 +246,19 @@ def options_args():
                   "Given: '%s', Valid: %s" % (config, str(ARCHIVER_CONFIGS.keys())))
         exit(FAILURE_CODE)
 
+    if config == 'mozharness':
+        custom_mozharness_options(options)
+
     return options, args
+
+
+def custom_mozharness_options(options):
+    if options.rev == 'default':
+        cmd = ['hg', 'id', '-r', 'default', 'https://hg.mozilla.org/%s' % (options.repo,)]
+        log.info('"default" was passed as the revision. Querying remote repository for '
+                 'corresponding rev hash of current default tip with cmd: %s', cmd)
+        options.rev = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
+        log.info('default revision being used: %s', options.rev)
 
 
 def main():
@@ -261,14 +273,7 @@ def main():
     if subdir:
         api_url += "&subdir=%s" % (subdir,)
 
-    output = subprocess.Popen(
-        ['hg', 'id', '-r', 'default', 'http://hg.mozilla.org/%s' % (options.repo,)],
-        stdout=subprocess.PIPE
-    ).communicate()[0]
-
-    print output
-
-    # archiver(url=api_url, config_key=config, options=options)
+    archiver(url=api_url, config_key=config, options=options)
 
     exit(SUCCESS_CODE)
 
