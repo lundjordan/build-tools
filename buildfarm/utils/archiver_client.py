@@ -261,7 +261,11 @@ def main():
     if subdir:
         api_url += "&subdir=%s" % (subdir,)
 
-    output = subprocess.Popen(['hg', '--help'], stdout=subprocess.PIPE).communicate()[0]
+    output = subprocess.Popen(
+        ['hg', 'id', '-r', 'default', 'http://hg.mozilla.org/%s' % (options.repo,)],
+        stdout=subprocess.PIPE
+    ).communicate()[0]
+
     print output
 
     # archiver(url=api_url, config_key=config, options=options)
