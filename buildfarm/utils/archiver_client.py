@@ -257,7 +257,7 @@ def custom_mozharness_options(options):
         cmd = ['hg', 'id', '-r', 'default', 'https://hg.mozilla.org/%s' % (options.repo,)]
         log.info('"default" was passed as the revision. Querying remote repository for '
                  'corresponding rev hash of current default tip with cmd: %s', cmd)
-        options.rev = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0]
+        options.rev = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0].strip()
         log.info('default revision being used: %s', options.rev)
 
 
