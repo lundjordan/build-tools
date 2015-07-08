@@ -208,8 +208,8 @@ def options_args():
     parser = OptionParser(__doc__)
     parser.add_option("--repo", dest="repo", default='mozilla-central',
                       help="The repository the archive is based on.")
-    parser.add_option("--rev", dest="rev", default='tip',
-                      help="The revision the archive is based on.")
+    parser.add_option("--rev", dest="rev", help="The revision the archive is based on.")
+    parser.add_option("--tag", dest="tag", help="The tag the archive is based on.")
     parser.add_option("--region", dest="region", default='us-west-2',
                       help="The preferred region of the s3 archive.")
     parser.add_option("--subdir", dest="subdir",
@@ -246,6 +246,9 @@ def options_args():
                   "Given: '%s', Valid: %s" % (config, str(ARCHIVER_CONFIGS.keys())))
         exit(FAILURE_CODE)
 
+    if options.tag and options.rev:
+        parser.error("--rev or --tag can be passed but not both.")
+
     if config == 'mozharness':
         custom_mozharness_options(options)
 
@@ -253,10 +256,19 @@ def options_args():
 
 
 def custom_mozharness_options(options):
+    overwriting_rev = None
+    msg = None
     if options.rev == 'default':
-        cmd = ['hg', 'id', '-r', 'default', 'https://hg.mozilla.org/%s' % (options.repo,)]
-        log.info('"default" was passed as the revision. Querying remote repository for '
-                 'corresponding rev hash of current default tip with cmd: %s', cmd)
+        overwriting_rev = 'default'
+        msg = '"default" was passed as the revision. Querying remote repository for ' \
+              'corresponding rev hash of current default tip'
+    if options.tag:
+        overwriting_rev = options.tag
+        msg = '"%s" was passed as the tag. Querying remote repository for corresponding rev hash'
+
+    if overwriting_rev:
+        cmd = ['hg', 'id', '-r', overwriting_rev, 'https://hg.mozilla.org/%s' % (options.repo,)]
+        log.info(msg)
         options.rev = subprocess.Popen(cmd, stdout=subprocess.PIPE).communicate()[0].strip()
         log.info('default revision being used: %s', options.rev)
 
