@@ -40,16 +40,14 @@ class ReleaseCreatorBase(object):
                       enUSPlatforms, schemaVersion, openURL=None,
                       **updateKwargs):
         assert schemaVersion in (3, 4), 'Unhandled schema version %s' % schemaVersion
-        self.name = get_release_blob_name(productName, version, buildNumber)
         data = {
-            'name': self.name,
             'detailsUrl': getProductDetails(productName.lower(), appVersion),
             'platforms': {},
             'fileUrls': {},
+            'appVersion': appVersion,
+            'platformVersion': appVersion,
+            'displayVersion': getPrettyVersion(version)
         }
-        data['appVersion'] = appVersion
-        data['platformVersion'] = appVersion
-        data['displayVersion'] = getPrettyVersion(version)
 
         actions = []
         if openURL:
@@ -88,14 +86,15 @@ class ReleaseCreatorBase(object):
             updateChannels, stagingServer, bouncerServer,
             enUSPlatforms, hashFunction, schemaVersion, openURL=None,
             **updateKwargs):
-        api = Release(self.name, auth=self.auth, api_root=self.api_root)
         data = self.generate_data(appVersion, productName, version,
                                   buildNumber, updateChannels,
                                   stagingServer, bouncerServer, enUSPlatforms,
                                   schemaVersion, openURL, **updateKwargs)
+        name = get_release_blob_name(productName, version, buildNumber,
+                                     self.dummy)
+        api = Release(name=name, auth=self.auth, api_root=self.api_root)
         current_data, data_version = api.get_data()
         data = recursive_update(current_data, data)
-        api = Release(name=self.name, auth=self.auth, api_root=self.api_root)
         api.update_release(version=appVersion,
                            product=productName,
                            hashFunction=hashFunction,
@@ -283,7 +282,8 @@ class NightlySubmitterBase(object):
         else:
             build_type = self.build_type
 
-        name = get_nightly_blob_name(productName, branch, build_type, buildID, self.dummy)
+        name = get_nightly_blob_name(productName, branch, build_type, buildID,
+                                     self.dummy)
         api = SingleLocale(name=name, build_target=build_target, locale=locale,
                            auth=self.auth, api_root=self.api_root)
         current_data, data_version = api.get_data()
@@ -373,15 +373,15 @@ class ReleaseSubmitterBase(object):
 
         name = get_release_blob_name(productName, version, build_number,
                                      self.dummy)
-
         data = {
             'buildID': buildID,
+            'appVersion': appVersion,
+            'platformVersion': extVersion,
+            'displayVersion': getPrettyVersion(version)
         }
-        data['appVersion'] = appVersion
-        data['platformVersion'] = extVersion
-        data['displayVersion'] = getPrettyVersion(version)
 
-        data.update(self._get_update_data(productName, version, build_number, **updateKwargs))
+        data.update(self._get_update_data(productName, version, build_number,
+                                          **updateKwargs))
 
         data = json.dumps(data)
         api = SingleLocale(name=name, build_target=build_target, locale=locale,
@@ -402,7 +402,7 @@ class MultipleUpdatesReleaseMixin(object):
             for info in completeInfo:
                 if "previousVersion" in info:
                     from_ = get_release_blob_name(productName, version,
-                                                build_number, self.dummy)
+                                                  build_number, self.dummy)
                 else:
                     from_ = "*"
                 data["completes"].append({
